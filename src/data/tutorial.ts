@@ -59,9 +59,9 @@ export const tutorial = {
   conference: "IEEE International Symposium on Workload Characterization — IISWC 2026",
   conferenceShort: "IISWC 2026",
   affiliation: "UC Berkeley",
-  siteUrl: "https://copparihollmann.github.io/IISWC-tutorial-2026-RISCV-ML-Robotics/",
+  siteUrl: "https://ucb-bar.github.io/IISWC-tutorial-2026-RISCV-Robotics/",
   socialImageUrl:
-    "https://copparihollmann.github.io/IISWC-tutorial-2026-RISCV-ML-Robotics/assets/og-card.png",
+    "https://ucb-bar.github.io/IISWC-tutorial-2026-RISCV-Robotics/assets/og-card.png",
   event: {
     date: "Sunday, September 27, 2026",
     shortDate: "Sunday, September 27",
