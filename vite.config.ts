@@ -84,5 +84,13 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    rollupOptions: {
+      // Two pages: the public tutorial site, and the attendee lab instructions
+      // served offline from the tutorial router at http://10.42.0.1/tutorial/.
+      input: {
+        main: "index.html",
+        instructions: "instructions.html",
+      },
+    },
   },
 });

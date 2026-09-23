@@ -7,6 +7,7 @@ const siteRoot = resolve(dirname(dataPath), "../..");
 const failures = [];
 const required = [
   "index.html",
+  "instructions.html",
   "404.html",
   "manifest.webmanifest",
   "robots.txt",
@@ -40,8 +41,9 @@ for (const path of required) {
   }
 }
 
-const [html, notFound, manifestText, sitemap, favicon, data] = await Promise.all([
+const [html, labPage, notFound, manifestText, sitemap, favicon, data] = await Promise.all([
   load(root, "index.html"),
+  load(root, "instructions.html"),
   load(root, "404.html"),
   load(root, "manifest.webmanifest"),
   load(root, "sitemap.xml"),
@@ -105,7 +107,7 @@ if (manifest?.start_url !== "./" || manifest?.scope !== "./") {
   fail("Manifest must remain deployable below a GitHub Pages project path");
 }
 
-for (const [name, document] of [["index.html", html], ["404.html", notFound]]) {
+for (const [name, document] of [["index.html", html], ["instructions.html", labPage], ["404.html", notFound]]) {
   for (const match of document.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
     const reference = match[1];
     if (!reference.startsWith("./") || reference.includes("#")) continue;
@@ -206,6 +208,50 @@ const checkPngDimensions = async (path, expectedWidth, expectedHeight, label) =>
 
 await checkPngDimensions("assets/og-card.png", 1200, 630, "Social image");
 await checkPngDimensions("assets/apple-touch-icon.png", 180, 180, "Apple touch icon");
+
+/* The attendee lab instructions page. It is served offline from the tutorial
+   router on a subpath, so nothing in it may reach the network, and it must never
+   carry a secret that is handed out in the room instead. */
+
+for (const token of ["%BASE_URL%", "__PAGE_", "__OG_"])
+  if (labPage.includes(token)) fail(`Unresolved build token remains in instructions.html: ${token}`);
+
+if (!labPage.includes("<title>Lab Instructions | IISWC 2026 Tutorial</title>")) {
+  fail("The lab instructions page title has drifted");
+}
+
+for (const match of labPage.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
+  if (/^(?:[a-z]+:)?\/\//i.test(match[1])) fail(`Lab instructions page loads an off-network resource: ${match[1]}`);
+}
+
+if (/url\(\s*["']?(?:[a-z]+:)?\/\//i.test(css) || css.includes("@import")) {
+  fail("The stylesheet pulls a resource over the network; the router serves this page offline");
+}
+
+/* A subpath deploy (http://10.42.0.1/tutorial/) breaks on any root-absolute asset
+   URL, and the font is the one that hides in the stylesheet rather than the HTML. */
+const fontUrl = css.match(/url\(\s*["']?([^"')]*overpass[^"')]*)/)?.[1];
+if (!fontUrl) fail("The Overpass @font-face rule no longer points at a file");
+else if (fontUrl.startsWith("/")) fail(`The font URL is root-absolute and breaks below a subpath: ${fontUrl}`);
+
+const labContent = [
+  "10.42.0.{N}",
+  "aws-{N}.iiswc",
+  "pynq-{N}",
+  "/opt/iiswc/host/board_id.sh",
+  "/opt/iiswc/host/aws_whoami.sh",
+  "/opt/iiswc/host/aws_run.sh aws-{N}.iiswc",
+  "chipyard_pynqz1_all_f40",
+  "scripts/run_xpurt_schedule.py",
+  "execCommand",
+];
+for (const value of labContent) if (!javascript.includes(value)) fail(`Lab instructions are missing: ${value}`);
+
+for (const secret of ["BEGIN OPENSSH PRIVATE KEY", "BEGIN RSA PRIVATE KEY", "BEGIN EC PRIVATE KEY", "PuTTY-User-Key-File"])
+  if (`${builtText}\n${javascript}`.includes(secret)) fail(`A private key reached the built site: ${secret}`);
+if (!javascript.includes("handed out in the room")) {
+  fail("The lab instructions no longer say that the passphrase, password and key are handed out in the room");
+}
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join("\n"));
