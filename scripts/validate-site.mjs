@@ -209,9 +209,9 @@ const checkPngDimensions = async (path, expectedWidth, expectedHeight, label) =>
 await checkPngDimensions("assets/og-card.png", 1200, 630, "Social image");
 await checkPngDimensions("assets/apple-touch-icon.png", 180, 180, "Apple touch icon");
 
-/* The attendee lab instructions page. It is served offline from the tutorial
-   router on a subpath, so nothing in it may reach the network, and it must never
-   carry a secret that is handed out in the room instead. */
+/* The attendee lab instructions page. Nothing in it may depend on a third party, it
+   is deployed below a GitHub Pages project path, and it must never carry a credential
+   or an address that is handed out in the room instead. */
 
 for (const token of ["%BASE_URL%", "__PAGE_", "__OG_"])
   if (labPage.includes(token)) fail(`Unresolved build token remains in instructions.html: ${token}`);
@@ -225,32 +225,53 @@ for (const match of labPage.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
 }
 
 if (/url\(\s*["']?(?:[a-z]+:)?\/\//i.test(css) || css.includes("@import")) {
-  fail("The stylesheet pulls a resource over the network; the router serves this page offline");
+  fail("The stylesheet pulls a resource from a third party; every asset is served with the site");
 }
 
-/* A subpath deploy (http://10.42.0.1/tutorial/) breaks on any root-absolute asset
-   URL, and the font is the one that hides in the stylesheet rather than the HTML. */
+/* A project-path deploy (…github.io/IISWC-tutorial-2026-RISCV-Robotics/) breaks on any
+   root-absolute asset URL, and the font is the one that hides in the stylesheet
+   rather than the HTML. */
 const fontUrl = css.match(/url\(\s*["']?([^"')]*overpass[^"')]*)/)?.[1];
 if (!fontUrl) fail("The Overpass @font-face rule no longer points at a file");
 else if (fontUrl.startsWith("/")) fail(`The font URL is root-absolute and breaks below a subpath: ${fontUrl}`);
 
 const labContent = [
   "10.42.0.{N}",
-  "aws-{N}.iiswc",
   "pynq-{N}",
-  "/opt/iiswc/host/board_id.sh",
-  "/opt/iiswc/host/aws_whoami.sh",
-  "/opt/iiswc/host/aws_run.sh aws-{N}.iiswc",
+  "lab.board_status()",
+  'lab.board("run", "zephyr", timeout=300)',
+  "lab.board_put(",
   "chipyard_pynqz1_all_f40",
   "scripts/run_xpurt_schedule.py",
   "execCommand",
 ];
 for (const value of labContent) if (!javascript.includes(value)) fail(`Lab instructions are missing: ${value}`);
 
+const labBundle = (await Promise.all(
+  javascriptFiles.filter((path) => path.includes("instructions")).map((path) => readFile(path, "utf8")),
+)).join("\n");
+if (!labBundle) fail("The lab instructions bundle was not found, so its own checks did not run");
+
+/* The flow the page describes: JupyterLab on the attendee's own instance, one shared
+   passphrase, ten verbs to the card. Nothing an attendee would reach by ssh, with a
+   key, or through the tutorial router belongs on it. */
+const replacedFlow = ["ssh -i", ".pem", "/opt/iiswc/host/aws_", "aws-{N}.iiswc", "10.42.0.1"];
+for (const value of replacedFlow)
+  if (labBundle.includes(value)) fail(`Lab instructions describe the replaced flow: ${value}`);
+
+/* A seat address is handed out in the room and never published, so no literal address
+   and no instance hostname may appear. The board's 10.42.0.{N} is a template and
+   carries no octet. */
+for (const match of labBundle.matchAll(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g))
+  fail(`A literal address reached the lab instructions: ${match[0]}`);
+if (/\bip-\d+-\d+-\d+-\d+\b/.test(labBundle)) {
+  fail("A private instance hostname reached the lab instructions");
+}
+
 for (const secret of ["BEGIN OPENSSH PRIVATE KEY", "BEGIN RSA PRIVATE KEY", "BEGIN EC PRIVATE KEY", "PuTTY-User-Key-File"])
   if (`${builtText}\n${javascript}`.includes(secret)) fail(`A private key reached the built site: ${secret}`);
 if (!javascript.includes("handed out in the room")) {
-  fail("The lab instructions no longer say that the passphrase, password and key are handed out in the room");
+  fail("The lab instructions no longer say that the passphrase is handed out in the room");
 }
 
 if (failures.length) {

@@ -9,10 +9,7 @@ export function BenchStep({ step, seat }: { step: Step; seat: string }) {
         <span className="bench-step__number">{step.id}</span>
         <div>
           <h3><BenchText text={step.title} seat={seat} /></h3>
-          <small>
-            {step.where}
-            {step.uplink ? <span className="bench-badge bench-badge--uplink">Needs internet</span> : null}
-          </small>
+          <small>{step.where}</small>
         </div>
       </header>
 

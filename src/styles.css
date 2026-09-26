@@ -1827,13 +1827,6 @@ svg {
   font-size: 0.95rem;
 }
 
-.bench-hero__offline {
-  max-width: 62ch;
-  margin: 1.5rem 0 0;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.76rem;
-}
-
 .bench-seat {
   padding: 1.1rem 1.25rem;
   color: var(--ink);
@@ -1970,11 +1963,6 @@ svg {
   color: var(--muted);
   background: transparent;
   border: 1px dashed var(--muted);
-}
-
-.bench-badge--uplink {
-  color: var(--blue);
-  background: var(--blue-soft);
 }
 
 .bench-step {

@@ -43,7 +43,6 @@ export default function InstructionsPage() {
             <h1 id="bench-title">{instructions.title}</h1>
             <p className="bench-hero__intro">{instructions.intro}</p>
             <BenchSeat seat={seat} onSeatChange={setSeat} />
-            <p className="bench-hero__offline">{instructions.offlineNote}</p>
           </div>
         </section>
 

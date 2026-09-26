@@ -12,11 +12,10 @@ const labels: Record<CopyState, string> = {
 };
 
 /**
- * navigator.clipboard does not exist over http:// or file://, which is exactly how
- * this page is served from the tutorial router. The execCommand path is therefore
- * the primary one rather than a nicety, and when that fails too the text is selected
- * in place so Ctrl-C still works. A copy button that silently does nothing is worse
- * than no copy button at all.
+ * navigator.clipboard exists only in a secure context, so the execCommand path is a
+ * real fallback rather than a nicety, and when that fails too the text is selected in
+ * place so Ctrl-C still works. A copy button that silently does nothing is worse than
+ * no copy button at all.
  */
 async function writeToClipboard(text: string): Promise<boolean> {
   try {

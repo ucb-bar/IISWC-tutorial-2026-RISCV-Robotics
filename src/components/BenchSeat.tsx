@@ -12,8 +12,8 @@ const readStoredSeat = () => {
 };
 
 /**
- * The board address is the most error-prone thing an attendee handles, so it is
- * typed once here and every 10.42.0.N, pynq-N and aws-N.iiswc on the page follows.
+ * The seat number is typed once here and every 10.42.0.N and pynq-N on the page
+ * follows it, so nobody retypes an address into a command.
  */
 export function useSeat(): [string, (value: string) => void] {
   const [seat, setSeat] = useState("");

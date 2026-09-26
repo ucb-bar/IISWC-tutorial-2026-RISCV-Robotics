@@ -12,7 +12,6 @@ export function BenchUnit({ unit, seat }: { unit: Unit; seat: string }) {
           <h2 id={`${unit.id}-title`}>{unit.title}</h2>
           <p className="bench-unit__badges">
             <span className={`bench-badge bench-badge--${unit.status}`}>{statusLabels[unit.status]}</span>
-            {unit.uplink ? <span className="bench-badge bench-badge--uplink">Needs internet</span> : null}
           </p>
           {unit.note ? <p className="bench-unit__note"><BenchText text={unit.note} seat={seat} /></p> : null}
         </header>
