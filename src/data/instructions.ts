@@ -108,7 +108,7 @@ const units: Unit[] = [
         ],
         takeaway: "Check the band before you start work: the same passphrase opens every seat, so a mistyped address drops you into a neighbour's work with no warning.",
         fixes: [
-          { symptom: "Nothing loads at all", action: "Type the `https://` yourself. Nothing answers on the plain-http port." },
+          { symptom: "Nothing loads at all", action: "Type the `https://` yourself." },
           { symptom: "`502 Bad Gateway`", action: "The instance is still starting. Wait half a minute and reload." },
           { symptom: "`429 Too many requests`", action: "Too many login attempts from the room at once. Wait a minute and try again." },
           { symptom: "The band names a seat that is not yours", action: "Log out, re-read the address, and open it again." },
@@ -125,7 +125,6 @@ const units: Unit[] = [
         takeaway: "The kernel runs on the instance, so a long cell survives a dropped browser. Reconnect and its output is still there.",
         fixes: [
           { symptom: "`ModuleNotFoundError: iiswc_lab`", action: "Run the whole cell: its first two lines put the working directory on the path." },
-          { symptom: "The notebook is not in the file browser", action: "Tell an instructor; the content is copied in after the instance starts." },
         ],
       },
       {
@@ -140,10 +139,9 @@ const units: Unit[] = [
         fixes: [
           { symptom: "`board offline (nothing is listening)`", action: "The card has not connected yet. Read the OLED again, and power-cycle if `up M:SS` is frozen." },
           { symptom: "`board offline (tunnel is stale)`", action: "The card retries on its own. Wait, then re-run the cell." },
-          { symptom: "`board path NOT BUILT (stub)`", action: "This instance has no way to reach a card at all. Tell an instructor." },
           { symptom: "It stays offline after a power-cycle", action: "Tell an instructor. Every step below that runs on the instance runs without a board." },
           { symptom: "`PL` is anything but `operating`", action: "Power-cycle and let the boot service load the bitstream." },
-          { symptom: "`MAGIC 0x5A5A0039`", action: "That is the trace bitstream. Units 1 and 2 need `0x5A5A0038`: load the PL again, no re-image." },
+          { symptom: "`MAGIC 0x5A5A0039`", action: "That is the trace bitstream. Unit 1 needs `0x5A5A0038`: load the PL again, no re-image." },
         ],
       },
       {
@@ -159,14 +157,13 @@ const units: Unit[] = [
           { command: "run", does: "One named lab step." },
           { command: "camera, mic", does: "One capture, where the hardware is fitted." },
         ],
-        takeaway: "Anything else comes back as `BoardError: unknown verb`, with the ten listed.",
       },
     ],
   },
   {
     id: "unit-1",
     eyebrow: "Unit one",
-    title: "Zephyr and Chipyard: build on the cloud, run on your SoC",
+    title: "Zephyr and Chipyard: build an image on the instance, run it on your SoC",
     status: "live",
     note: "Your card has no toolchain. Build the image on the instance, send it to the card, and start the guest from the notebook.",
     steps: [
@@ -193,31 +190,14 @@ const units: Unit[] = [
           { kind: "cmd", text: "lab.sh(\"ls -l ~/out/boot_info/zephyr/zephyr.bin\")" },
           { kind: "out", text: "-rw-rw-r-- 1 ubuntu ubuntu 55536 ... zephyr.bin" },
         ],
-        takeaway: "Build for `chipyard_pynqz1_all_f40`, never plain `chipyard_pynqz1`. The plain board has a different clock and the guest will not boot.",
-        fixes: [
-          { symptom: "`west: command not found`", action: "The `source` line is part of the command; send it as one." },
-          { symptom: "CMake names a missing toolchain file", action: "The message is misleading: `ZEPHYR_SDK_INSTALL_DIR` points at another SDK." },
-          { symptom: "CMake cannot find a source under `samples/`", action: "The instance image is behind. Tell an instructor." },
-        ],
-      },
-      {
-        id: "1.3",
-        title: "Stage the image you are going to send",
-        where: "On the instance",
-        note: "Nothing in the repository creates `~/pub/`, so make it yourself and copy the image in.",
-        blocks: [
-          { kind: "cmd", text: "lab.sh(\"mkdir -p ~/pub && cp ~/out/boot_info/zephyr/zephyr.bin ~/pub/zephyr.bin && ls -l ~/pub/zephyr.bin\")" },
-          { kind: "out", text: "-rw-rw-r-- 1 ubuntu ubuntu 55536 ... /home/ubuntu/pub/zephyr.bin" },
-        ],
-        takeaway: "`lab.board_put()` takes any path on the instance, so you can push straight out of `~/out/` and skip this.",
       },
       {
         id: "1.4",
-        title: "Send it, load it, watch it run",
+        title: "Upload the image to the PYNQ board and run it",
         where: "On the board",
-        note: "Three cells, about forty seconds in all: the image goes to the card, the card loads the PL and starts the guest, and the console comes back as a file. The md5 is the card's own, so a truncated transfer shows up here rather than as a dead guest.",
+        note: "Three cells, about forty seconds in all: the image you just built goes to the card, the card loads the PL and starts the guest, and the console comes back as a file. The md5 is the card's own, so a truncated transfer shows up here rather than as a dead guest.",
         blocks: [
-          { kind: "cmd", text: "lab.board_put(\"/home/ubuntu/pub/zephyr.bin\")" },
+          { kind: "cmd", text: "lab.board_put(\"/home/ubuntu/out/boot_info/zephyr/zephyr.bin\")" },
           { kind: "out", text: "{\"ok\": true, \"stored\": \"zephyr.bin\", \"bytes\": 55536,\n \"md5\": \"50469e9c18e9ec24f1e9ec7d0fe45ef1\"}" },
           { kind: "cmd", text: "lab.board(\"run\", \"zephyr\", timeout=300)" },
           { kind: "out", text: "{\n  \"ok\": true,\n  \"ran\": \"zephyr\",\n  \"console_bytes\": 373,\n  \"results\": [\"console.out\", \"run.log\"]\n}" },
@@ -230,7 +210,7 @@ const units: Unit[] = [
             text: "*** Booting Zephyr OS build 4329bf61c4fe ***\nBI_STATUS state=PRESENT nonce=0xa1873611 soc_magic=0x5A5A0038\nBI_NET host=pynq-{N} ipv4=10.42.0.{N} ssid=iiswc-robotics-tutorial link_up=1\nBI_DONE",
           },
         ],
-        takeaway: "`soc_magic=0x5A5A0038` is the bitstream Units 1 and 2 want. The nonce is yours and will differ, and the OLED restarts at `up 0:00`.",
+        takeaway: "`soc_magic=0x5A5A0038` is the bitstream Unit 1 wants. The nonce is yours and will differ, and the OLED restarts at `up 0:00`.",
         fixes: [
           { symptom: "`console_bytes: 0`", action: "Stop and tell an instructor. Do not retry and do not reboot." },
           { symptom: "The console is garbage characters", action: "The guest was built for the wrong board, so the clock is wrong. Rebuild for `chipyard_pynqz1_all_f40`." },
@@ -246,15 +226,15 @@ const units: Unit[] = [
   {
     id: "unit-2",
     eyebrow: "Unit two",
-    title: "ModelBlaster: a network compiled to kernels you can beat",
-    status: "draft",
-    note: "Compile a PyTorch model to int8 kernels for this SoC, replace one, and check that the replacement is identical rather than merely faster.",
+    title: "ModelBlaster: Compiling PyTorch Models to embedded Heterogeneous SoCs",
+    status: "partial",
+    note: "Compile a PyTorch model to int8 kernels for this SoC, replace one, and check that the replacement is identical rather than merely faster. The gate below is how a replacement is accepted: it compares every candidate against the shipping kernel over every shape and scale the decoder dispatches.",
     steps: [
       {
         id: "2.1",
-        title: "Optional: the kernel gate",
+        title: "Optional: run the kernel gate",
         where: "On the instance",
-        note: "No board and no cross-compiler. It takes no arguments, exits with the number of failures, and runs for about three minutes, which is why it is optional.",
+        note: "It takes no arguments, exits with the number of failures, and runs for about three minutes, which is why it is optional.",
         blocks: [
           { kind: "cmd", text: "lab.sh(\"cd /home/ubuntu/tut && fpga/pynq-z2/modelblaster/kernels/pext_nl/test/b76_gate.sh\",\n       timeout=600)" },
           { kind: "out", text: "b76 permute gate: ... fails=0  PASS\n...\nB76 GATE PASSED" },
@@ -263,13 +243,13 @@ const units: Unit[] = [
       },
     ],
     gaps: [
-      "No attendee sequence yet. Every ModelBlaster lab needs the bench-board lock and an 18 GB toolchain, and your instance has neither.",
+      "Generating the kernels has no attendee sequence yet. Unit 4 is an LLM writing one of those replacement kernels.",
     ],
   },
   {
     id: "unit-3",
     eyebrow: "Unit three",
-    title: "TACIT: every instruction the SoC retired, on one timeline",
+    title: "TACIT: instruction-level tracing of two heterogeneous harts on one timeline",
     status: "partial",
     note: "A trace encoder in the Rocket core writes retired instructions to memory; a decoder turns them into a timeline.",
     steps: [
@@ -291,12 +271,22 @@ const units: Unit[] = [
   {
     id: "unit-4",
     eyebrow: "Unit four",
-    title: "Scheduling across the machine, and asking a model to write the kernel",
+    title: "Agentic Optimization in ModelBlaster",
     status: "partial",
-    note: "Three pieces. You run the scheduler; the other two are shown from the front.",
+    note: "An LLM rewrites one int8 kernel for the board's MBP instructions, Spike scores every candidate bit-exact against the reference, and the board then runs the round's best kernel three ways — the reference, the new kernel, and the new kernel with MBP switched off — so the accelerator is priced apart from the rewritten loop. This unit is its own pair of notebooks on your seat, and `mb_lab_solved.ipynb` redraws a complete run from the recorded runs shipped beside it: the LLM's rounds, the kernels it wrote, the conversation it had, and the verdict.",
+    gaps: [
+      "Running the lab live, on your own board and LLM key, is not ready yet.",
+    ],
+  },
+  {
+    id: "unit-5",
+    eyebrow: "Unit five",
+    title: "XPU-RT: Scheduling Multi-Model Workloads to Heterogeneous SoCs",
+    status: "partial",
+    note: "You run the scheduler.",
     steps: [
       {
-        id: "4.1",
+        id: "5.1",
         title: "Solve a real schedule on your instance",
         where: "On the instance",
         note: "XPU-RT places every operator of a network onto the devices of a heterogeneous machine. Eight dispatches, solved to optimality in under a second.",
@@ -312,22 +302,19 @@ const units: Unit[] = [
         ],
         takeaway: "The operator durations are measured on this silicon, so four vCPUs and a 48-core workstation both return 237.87. `solver_s` is your instance's own wall clock and will differ.",
         fixes: [
-          { symptom: "`RuntimeError: no interpreter with ortools found`", action: "Send the `source` line with the rest of the command." },
-          { symptom: "Two runs, two different makespans", action: "`XPURT_CPSAT_WORKERS=1` is not set." },
           { symptom: "Nothing in the output for a minute", action: "Normal: Python buffers. The solve is under three seconds once it starts." },
         ],
       },
     ],
     gaps: [
-      "Agentic code generation has no attendee flow; the fusion-hint speed-up was withdrawn by its own authors.",
-      "RiskyBird is a demonstration rather than a lab: one or two boards in the room, shown from the front.",
+      "RiskyBird, the robot these schedules are for, is a demonstration rather than a lab: one or two boards in the room, shown from the front.",
     ],
   },
 ];
 
 export const instructions = {
   eyebrow: "IISWC 2026 · Attendee bench card",
-  title: "Four units, one board, one notebook",
+  title: "Five units, in the order you run them",
   intro: "Work down the page. Each step is a command, the output you should get, and what to do when you don't.",
   seat: {
     label: "Your seat number",
