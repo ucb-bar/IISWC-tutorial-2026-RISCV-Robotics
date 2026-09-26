@@ -188,7 +188,7 @@ const units: Unit[] = [
             text: "-- west build: building application\n...\nMemory region         Used Size  Region Size  %age Used\n             RAM:       69720 B       256 MB      0.03%",
           },
           { kind: "cmd", text: "lab.sh(\"ls -l ~/out/boot_info/zephyr/zephyr.bin\")" },
-          { kind: "out", text: "-rw-rw-r-- 1 ubuntu ubuntu 55536 ... zephyr.bin" },
+          { kind: "out", text: "-rw-rw-r-- 1 ubuntu ubuntu 56888 ... zephyr.bin" },
         ],
       },
       {
@@ -198,7 +198,7 @@ const units: Unit[] = [
         note: "Three cells, about forty seconds in all: the image you just built goes to the card, the card loads the PL and starts the guest, and the console comes back as a file. The md5 is the card's own, so a truncated transfer shows up here rather than as a dead guest.",
         blocks: [
           { kind: "cmd", text: "lab.board_put(\"/home/ubuntu/out/boot_info/zephyr/zephyr.bin\")" },
-          { kind: "out", text: "{\"ok\": true, \"stored\": \"zephyr.bin\", \"bytes\": 55536,\n \"md5\": \"50469e9c18e9ec24f1e9ec7d0fe45ef1\"}" },
+          { kind: "out", text: "{\"ok\": true, \"stored\": \"zephyr.bin\", \"bytes\": 56888,\n \"md5\": \"c830b4b6a0d1e4f7c2b9358e6a1d70cf\"}" },
           { kind: "cmd", text: "lab.board(\"run\", \"zephyr\", timeout=300)" },
           { kind: "out", text: "{\n  \"ok\": true,\n  \"ran\": \"zephyr\",\n  \"console_bytes\": 373,\n  \"results\": [\"console.out\", \"run.log\"]\n}" },
           {
@@ -213,7 +213,7 @@ const units: Unit[] = [
         takeaway: "`soc_magic=0x5A5A0038` is the bitstream Unit 1 wants. The nonce is yours and will differ, and the OLED restarts at `up 0:00`.",
         fixes: [
           { symptom: "`console_bytes: 0`", action: "Stop and tell an instructor. Do not retry and do not reboot." },
-          { symptom: "The console is garbage characters", action: "The guest was built for the wrong board, so the clock is wrong. Rebuild for `chipyard_pynqz1_all_f40`." },
+          
           { symptom: "`another console reader is already on /dev/ttyPS1`", action: "Kill the PID it prints, not a name pattern." },
           { symptom: "Banner only, no `BI_` lines", action: "The reader started late. The whole text is in `console.out` on the card." },
         ],
